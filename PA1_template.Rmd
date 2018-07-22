@@ -8,18 +8,44 @@ output:
 
 ## Loading and preprocessing the data
 
-
+```{r,echo=TRUE}
+activity<-read.csv("C:\\Users\\Prerana\\Desktop\\activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
 
-
-
+```{r}
+totalsteps<-tapply(activity$steps,activity$date,sum,na.rm=TRUE)
+hist(totalsteps,xlab="Total steps per day")
+mean(totalsteps)
+median(totalsteps)
+```
 ## What is the average daily activity pattern?
 
-
-
+```{r,echo=TRUE}
+avg_activity<-aggregate(steps~interval,activity,FUN=mean,na.rm=TRUE)
+plot(avg_activity,xlab="Intervals",ylab="Average number of steps",type="l")
+max_steps<-which.max(avg_activity$steps)
+print (paste("The interval with the highest avg steps is ", avg_activity[max_steps, ]$interval))
+```
 ## Imputing missing values
-
-
-
+```{r,echo=TRUE}
+missingvalues<-length(which(is.na(activity$steps)))
+for (i in 1:nrow(activity)) {
+if(is.na(activity$steps[i])) {
+val<-avg_activity$steps[which(avg_activity$interval == activity$interval[i])]
+activity$steps[i] <- val 
+}
+}
+activity_impute <- aggregate(steps ~ date, activity, sum)
+hist(activity_impute$steps,xlab="Number of steps per day", main="Histogram for the total number of steps per day")
+mean(activity_impute$steps)
+median(activity_impute$steps)
+```
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r,echo=TRUE}
+activity_impute$day<- ifelse(as.POSIXlt(activity_impute$date)$wday %in% c(0,6), 'weekend', 'weekday')
+avg_activity_impute <- aggregate(steps ~ interval , data=activity, mean)
+library(ggplot2)
+ggplot(avg_activity_impute, aes(interval, steps)) + geom_line()+xlab("5-minute interval") +ylab("avarage number of steps")
+```
