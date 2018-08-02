@@ -1,19 +1,18 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
+title: 'Reproducible Research: Peer Assessment 1'
+output:
   html_document:
-    keep_md: true
+    keep_md: yes
+  pdf_document: default
 ---
 
 
 ## Loading and preprocessing the data
-
-```{r,echo=TRUE}
-activity<-read.csv("C:\\Users\\Prerana\\Desktop\\activity.csv")
+```{r}
+activity<-read.csv("activity.csv")
 ```
 
 ## What is mean total number of steps taken per day?
-
 ```{r}
 totalsteps<-tapply(activity$steps,activity$date,sum,na.rm=TRUE)
 hist(totalsteps,xlab="Total steps per day")
@@ -21,15 +20,14 @@ mean(totalsteps)
 median(totalsteps)
 ```
 ## What is the average daily activity pattern?
-
-```{r,echo=TRUE}
+```{r}
 avg_activity<-aggregate(steps~interval,activity,FUN=mean,na.rm=TRUE)
 plot(avg_activity,xlab="Intervals",ylab="Average number of steps",type="l")
 max_steps<-which.max(avg_activity$steps)
 print (paste("The interval with the highest avg steps is ", avg_activity[max_steps, ]$interval))
 ```
 ## Imputing missing values
-```{r,echo=TRUE}
+```{r}
 missingvalues<-length(which(is.na(activity$steps)))
 for (i in 1:nrow(activity)) {
 if(is.na(activity$steps[i])) {
@@ -43,9 +41,23 @@ mean(activity_impute$steps)
 median(activity_impute$steps)
 ```
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r,echo=TRUE}
-activity_impute$day<- ifelse(as.POSIXlt(activity_impute$date)$wday %in% c(0,6), 'weekend', 'weekday')
-avg_activity_impute <- aggregate(steps ~ interval , data=activity, mean)
-library(ggplot2)
-ggplot(avg_activity_impute, aes(interval, steps)) + geom_line()+xlab("5-minute interval") +ylab("avarage number of steps")
+```{r}
+day <- weekdays(as.Date(activity$date))
+daylevel <- vector()
+for (i in 1:nrow(activity)) {
+    if (day[i] == "Saturday") {
+        daylevel[i] <- "Weekend"
+    } else if (day[i] == "Sunday") {
+        daylevel[i] <- "Weekend"
+    } else {
+        daylevel[i] <- "Weekday"
+    }
+}
+activity$daylevel <- daylevel
+activity$daylevel <- factor(activity$daylevel)
+library(lattice)
+stepsByDay <- aggregate(steps ~ interval + daylevel, data = activity, mean)
+names(stepsByDay) <- c("interval", "daylevel", "steps")
+xyplot(steps ~ interval | daylevel, stepsByDay, type = "l", layout = c(1, 2), 
+    xlab = "Interval", ylab = "Number of steps")
 ```
